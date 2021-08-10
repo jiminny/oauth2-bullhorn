@@ -65,13 +65,17 @@ class Bullhorn extends AbstractProvider
         $statusCode = $response->getStatusCode();
         if ($statusCode >= 400) {
             $errorMessage = $response->getReasonPhrase();
-            if (isset($data['error'], $data['error_description'])) {
+            if (isset($data['error'], $data['error_description']) && is_scalar($data['error']) && is_scalar($data['error_description'])) {
                 $errorMessage = sprintf('%s: %s', $data['error'], $data['error_description']);
-            } elseif (isset($data['errorMessage'])) {
+            } elseif (isset($data['errorMessage']) && is_scalar($data['errorMessage'])) {
                 $errorMessage = $data['errorMessage'];
             }
 
-            throw new IdentityProviderException($errorMessage, $statusCode, $response);
+            if (empty($errorMessage)) {
+                $errorMessage = 'Unidentified error occurred';
+            }
+
+            throw new IdentityProviderException($errorMessage, $statusCode, (string) $response->getBody());
         }
     }
 
