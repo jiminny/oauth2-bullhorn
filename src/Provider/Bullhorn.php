@@ -25,7 +25,7 @@ class Bullhorn extends AbstractProvider
      *
      * @var int
      */
-    protected $accessTokenTtl = 1440;
+    protected $accessTokenTtl = 180;
 
     public function getBaseAuthorizationUrl(): string
     {
@@ -44,6 +44,11 @@ class Bullhorn extends AbstractProvider
         }
 
         return sprintf('%s/settings/userId', $token->getRestUrl());
+    }
+
+    public function getDefaultTtl(): int
+    {
+        return $this->accessTokenTtl * 60;
     }
 
     protected function getDefaultScopes(): array
