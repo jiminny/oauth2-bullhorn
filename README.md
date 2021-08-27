@@ -7,7 +7,7 @@ This package provides [Bullhorn](https://www.bullhorn.com/) OAuth 2.0 support fo
 To install, use composer:
 
 ```
-composer require iflorespaz/oauth2-zoom
+composer require jiminny/oauth2-bullhorn
 ```
 
 ## Usage
