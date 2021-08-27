@@ -2,14 +2,10 @@
 
 namespace Jiminny\OAuth2\Client\Provider;
 
-use Jiminny\OAuth2\Client\Helper\BullhornLoginHandler;
-use Jiminny\OAuth2\Client\Token\BullhornAccessToken;
-use League\OAuth2\Client\Grant\AbstractGrant;
 use League\OAuth2\Client\Provider\AbstractProvider;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 use League\OAuth2\Client\Token\AccessToken;
-use League\OAuth2\Client\Token\AccessTokenInterface;
 use Psr\Http\Message\ResponseInterface;
 
 class Bullhorn extends AbstractProvider
@@ -20,12 +16,6 @@ class Bullhorn extends AbstractProvider
      * @var string
      */
     protected $oauthBaseUrl = 'https://auth.bullhornstaffing.com';
-    /**
-     * The desired TTL of the access token in minutes.
-     *
-     * @var int
-     */
-    protected $accessTokenTtl = 2800;
 
     public function getBaseAuthorizationUrl(): string
     {
@@ -37,26 +27,21 @@ class Bullhorn extends AbstractProvider
         return sprintf('%s/oauth/token', rtrim($this->oauthBaseUrl, '/'));
     }
 
-    public function getResourceOwnerDetailsUrl(AccessToken $token): string
-    {
-        if (!$token instanceof BullhornAccessToken) {
-            throw new IdentityProviderException('Invalid access token provided', 0, $token->getValues());
-        }
-
-        return sprintf('%s/settings/userId', $token->getRestUrl());
-    }
-
-    protected function getDefaultScopes(): array
+    /**
+     * Bullhorn provides no access to such information at this stage, so we will just override it
+     */
+    protected function fetchResourceOwnerDetails(AccessToken $token): array
     {
         return [];
     }
 
-    protected function getAuthorizationHeaders($token = null): array
+    public function getResourceOwnerDetailsUrl(AccessToken $token): ?string
     {
-        if ($token instanceof BullhornAccessToken) {
-            return ['BhRestToken' => $token->getToken()];
-        }
+        return null;
+    }
 
+    protected function getDefaultScopes(): array
+    {
         return [];
     }
 
@@ -92,30 +77,5 @@ class Bullhorn extends AbstractProvider
         $query = $this->getAccessTokenQuery($params);
 
         return $this->appendQuery($url, $query);
-    }
-
-    protected function createAccessToken(array $response, AbstractGrant $grant): AccessTokenInterface
-    {
-        return new BullhornAccessToken($response);
-    }
-
-    /**
-     * Overridden to perform the Bullhorn API login call and replace the OAuth access token with the BhRestToken.
-     */
-    protected function prepareAccessTokenResponse(array $result): array
-    {
-        $result = parent::prepareAccessTokenResponse($result);
-
-        $loginHandler = new BullhornLoginHandler($this);
-        $bhRestToken  = $loginHandler->getBHRestToken($result['access_token'], $this->accessTokenTtl);
-
-        $result = array_merge($result, [
-            'access_token' => $bhRestToken->getToken(),
-            'restUrl'      => $bhRestToken->getRestUrl(),
-            // convert expiration timestamp to TTL
-            'expires_in' => $bhRestToken->getExpiresAt() - time(),
-        ]);
-
-        return $result;
     }
 }
